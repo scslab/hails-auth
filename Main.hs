@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings, MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+module Main (main) where
 import Control.Exception (SomeException(..))
 
 import qualified Data.ByteString.Char8 as S8

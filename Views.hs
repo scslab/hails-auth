@@ -2,7 +2,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Views where
+module Views ( showView
+             , loginView
+             , newUser, editUser ) where
 
 import Prelude hiding (div, span, id)
 import Data.Monoid
