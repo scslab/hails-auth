@@ -5,7 +5,9 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Models where
+module Models ( User(..)
+              , insertUser, insertUser_
+              , updateUser, findUser ) where
 
 import Data.Maybe
 
