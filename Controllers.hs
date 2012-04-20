@@ -3,7 +3,10 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Controllers where
+module Controllers ( UsersController(..)
+                   , loginUser, newLoginUser
+                   , logoutUser
+                   )where
 
 import Control.Monad.Trans
 
@@ -153,7 +156,6 @@ loginUser = parseParams >> do
                                        (S8.pack pass) -> mkLogin uName >> err
             _ -> do redirectToSavedRefererOrTo "/"
                     setCurrentUser (fromJust m_hmac_key) mdomain usr
-                    flashSuccess "Account created."
   where err = flashError "Unknown username/password."
         mkLogin = renderHtml . loginView . Just
 
