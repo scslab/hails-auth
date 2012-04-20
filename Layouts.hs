@@ -3,7 +3,6 @@
 module Layouts where
 
 import Data.Maybe
-import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.IterIO.Http.Support
 
 import Prelude hiding (head, id, div, span)

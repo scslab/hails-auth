@@ -6,22 +6,16 @@
 module Controllers where
 
 import Control.Monad.Trans
-import Control.Exception (SomeException(..))
 
 import qualified Data.ByteString.Char8 as S8
 import qualified Data.ByteString.Lazy.Char8 as L8
-import Data.Monoid
 import Data.Maybe
 import Data.Digest.Pure.SHA
 
-import Data.IterIO
 import Data.IterIO.Http
-import Data.IterIO.HttpRoute (mimeTypesI, runHttpRoute, routeName)
-import Data.IterIO.Server.TCPServer
 import Data.IterIO.Http.Support
 import Control.Monad
 
-import Data.Bson (ObjectId)
 import Database.MongoDB.Structured (noSObjId)
 
 import Crypto.BCrypt
@@ -84,7 +78,7 @@ instance RestController t L IO UsersController where
                       case mpass of
                         Nothing -> respondStat stat500
                         Just pass -> do
-                          liftIO $ insertUser $ usr { userPassword = pass }
+                          liftIO $ insertUser_ $ usr { userPassword = pass }
                           redirectToSavedRefererOrTo "/"
                           setCurrentUser (fromJust m_hmac_key) mdomain usr
                           flashSuccess "Account created."
@@ -148,7 +142,6 @@ loginUser = parseParams >> do
     env <- liftIO getEnvironment
     let m_hmac_key   = lookup "HMAC_KEY" env
         mdomain      = lookup "COOKIE_DOMAIN" env
-    req <- getHttpReq
     paramOrBack "user_name"    $ \uName ->
         paramOrBack "password" $ \pass  -> do
           musr <- liftIO $ findUser uName
@@ -198,7 +191,8 @@ setCurrentUser key mdomain usr = do
   setCookie "_hails_user_hmac" $ show hmac ++ domain
 
 -- | Get the username of the currently logged in user
---getCurrentUser :: HttpResp IO -> Either (HttpResp IO) String
+getCurrentUser :: Action t b IO ()
+               -> Action t b IO (Either (Action t b IO ()) String)
 getCurrentUser resp = do
   env <- liftIO getEnvironment
   case lookup "HMAC_KEY" env of

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -5,7 +6,6 @@ module Views where
 
 import Prelude hiding (div, span, id)
 import Data.Monoid
-import Control.Monad
 
 import Models
 

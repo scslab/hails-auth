@@ -1,27 +1,28 @@
 {-# LANGUAGE OverloadedStrings, MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
-import Control.Monad.Trans
 import Control.Exception (SomeException(..))
 
 import qualified Data.ByteString.Char8 as S8
-import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Monoid
+import Data.Maybe
 
 import Data.IterIO
 import Data.IterIO.Http
-import Data.IterIO.HttpRoute (mimeTypesI, runHttpRoute, routeName)
+import Data.IterIO.HttpRoute (mimeTypesI)
 import Data.IterIO.Server.TCPServer
 import Data.IterIO.Http.Support
 
 import System.IO.Unsafe
+import System.Environment
 
 import Controllers
-
-type L = L8.ByteString
-type S = S8.ByteString
+import Utils
 
 main :: IO ()
-main = runTCPServer $ simpleHttpServer 8000 handler
+main = do
+  env <- getEnvironment
+  let port = fromMaybe 8000 $ lookup "PORT" env >>= maybeRead :: Int
+  runTCPServer $ simpleHttpServer (fromIntegral port) handler
 
 handler :: HttpRequestHandler IO ()
 handler = runIterAction $ runActionRoute $ mconcat
