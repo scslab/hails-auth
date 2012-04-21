@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings, MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 module Main (main) where
+import Control.Monad
 import Control.Exception (SomeException(..))
 
 import qualified Data.ByteString.Char8 as S8
@@ -10,20 +11,26 @@ import Data.Maybe
 import Data.IterIO
 import Data.IterIO.Http
 import Data.IterIO.HttpRoute (mimeTypesI)
+import Data.IterIO.SSL
 import Data.IterIO.Server.TCPServer
 import Data.IterIO.Http.Support
 
 import System.IO.Unsafe
 import System.Environment
 
+import OpenSSL (withOpenSSL)
+
 import Controllers
 import Utils
 
 main :: IO ()
-main = do
+main = withOpenSSL $ do
   env <- getEnvironment
+  server <- case lookup "SSL_KEY_FILE" env of
+             Nothing -> return simpleHttpServer
+             Just f  -> simpleHttpsServer `liftM` simpleContext f
   let port = fromMaybe 8000 $ lookup "PORT" env >>= maybeRead :: Int
-  runTCPServer $ simpleHttpServer (fromIntegral port) handler
+  runTCPServer $ server (fromIntegral port) handler
 
 handler :: HttpRequestHandler IO ()
 handler = runIterAction $ runActionRoute $ mconcat
