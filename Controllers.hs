@@ -39,11 +39,13 @@ data UsersController = UsersController
 
 instance RestController t L IO UsersController where
   restIndex _ = do
-    euser <- getCurrentUser (renderHtml $ loginView Nothing)
-    either id (redirectBackOrTo . ("/users/" ++)) euser
+    saveRefererIfNone
+    euser <- getCurrentUserOr (renderHtml $ loginView Nothing)
+    either id (redirectToSavedRefererOrTo . ("/users/" ++)) euser
 
   restShow _ _ = do
-    euser <- getCurrentUser (redirectBackOrTo "/")
+    saveRefererIfNone
+    euser <- getCurrentUserOr (redirectToSavedRefererOrTo "/")
     either id (renderHtml .  showView) euser
 
   restNew _ = renderHtml $ newUser Nothing
@@ -86,19 +88,19 @@ instance RestController t L IO UsersController where
                           setCurrentUser (fromJust m_hmac_key) mdomain usr
                           flashSuccess "Account created."
 
-   where userExists uN = findUser uN >>= return . isJust
+   where userExists uN = isJust `liftM` findUser uN
          mkEdit usr = renderHtml . newUser . Just $ usr { userPassword = "" }
          wellformed s = s =~ ("^[a-zA-Z][a-zA-Z0-9_]*" :: String)
          blank s = s =~ ("^\\s*$" :: String)
 
   restEdit _ _ = do
-    euser <- getCurrentUser (respondStat stat403)
+    euser <- getCurrentUserOr (respondStat stat403)
     either id (\uName -> do muser <- liftIO $ findUser uName
                             maybe (respondStat stat403)
                                   (renderHtml .  editUser) muser) euser
 
   restUpdate _ _ = parseParams >> do
-    euser <- getCurrentUser (respondStat stat403)
+    euser <- getCurrentUserOr (respondStat stat403)
     either id (\uName -> do muser <- liftIO $ findUser uName
                             maybe (respondStat stat403) doUpdate muser) euser
       where blank s = s =~ ("^\\s*$" :: String)
@@ -114,10 +116,10 @@ instance RestController t L IO UsersController where
               if blank email 
                 then flashError "Email cannot be blank."
                 else flashSuccess "Changed email address."
-            changePassword user = do
+            changePassword user = 
               paramOrBack "password_old"              $ \pass0 ->
                 paramOrBack "password"                $ \pass1 ->
-                  paramOrBack "password_confirmation" $ \pass2 -> do
+                  paramOrBack "password_confirmation" $ \pass2 -> 
                     case () of
                       _ | blank pass0 || blank pass1 -> 
                         redirectBack >> flashError "Password cannot be blank."
@@ -193,9 +195,9 @@ setCurrentUser key mdomain usr = do
   setCookie "_hails_user_hmac" $ show hmac ++ domain
 
 -- | Get the username of the currently logged in user
-getCurrentUser :: Action t b IO ()
-               -> Action t b IO (Either (Action t b IO ()) String)
-getCurrentUser resp = do
+getCurrentUserOr :: Action t b IO ()
+                 -> Action t b IO (Either (Action t b IO ()) String)
+getCurrentUserOr resp = do
   env <- liftIO getEnvironment
   case lookup "HMAC_KEY" env of
     Nothing -> return $ Left $ respondStat stat500
@@ -210,7 +212,7 @@ getAlreadyAuth req key =
   in do user <- lookup "_hails_user" cookies
         mac0 <- lookup "_hails_user_hmac" cookies
         let mac1 = showDigest $ hmacSha1 (L8.pack key) (lazyfy user)
-        if (S8.unpack mac0 == mac1)
+        if S8.unpack mac0 == mac1
           then return $ S8.unpack user
           else Nothing
     where lazyfy = L8.pack . S8.unpack

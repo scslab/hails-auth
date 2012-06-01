@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings, MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, OverloadedStrings, MultiParamTypeClasses #-}
 module Main (main) where
 import Control.Monad
 import Control.Exception (SomeException(..))

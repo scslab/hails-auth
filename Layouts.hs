@@ -24,15 +24,15 @@ stylesheet :: String -> Html
 stylesheet uri = link ! rel "stylesheet" ! type_ "text/css" ! href (toValue uri)
 
 application :: String -> String -> Html -> Html
-application brand brandUrl content = docTypeHtml $ do
+application brand brandUrl content = docTypeHtml $ 
   head $ do
-    title $ "GitStar"
+    title "GitStar"
     stylesheet "/css/bootstrap.css"
     stylesheet "/css/application.css"
     body $ do
-     div ! class_ "navbar navbar-fixed-top" $ do
-       div ! class_ "navbar-inner" $ do
-         div ! class_ "container" $ do
+     div ! class_ "navbar navbar-fixed-top" $ 
+       div ! class_ "navbar-inner" $ 
+         div ! class_ "container" $
            a ! href (toValue brandUrl) ! class_ "brand" $ toHtml brand
      div ! class_ "row" $
        div ! id "flash-messages" ! class_ "span4 offset4" $ ""
