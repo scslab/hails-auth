@@ -10,14 +10,13 @@ import qualified Data.ByteString.Char8 as S8
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Maybe (listToMaybe, fromJust)
 
-import Data.IterIO.Http (reqCookies)
+import Data.IterIO.Http (reqCookies, respAddHeader)
 import Data.IterIO.Http.Support
 import Data.Bson (genObjectId)
 
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.State
-import Data.IterIO.Http (respAddHeader)
 
 
 -- | Force get parameter value
@@ -32,18 +31,19 @@ with404orJust mval act = case mval of
                            Nothing -> respond404
                            Just val -> act val
 
--- | Redirect  back if the referer header is set, otherwise to the
--- given URL
-redirectBackOrTo :: String -> Action t b IO ()
-redirectBackOrTo url = do
-  mhdr <- requestHeader (S8.pack "referer")
-  redirectTo $ maybe url S8.unpack mhdr
+-- | Set the referer cookie (to referer) if unset.
+saveRefererIfNone :: Action t b IO ()
+saveRefererIfNone = do
+  mref <- getCookie "_hails_referer"
+  mhdr <- fmap S8.unpack `liftM` requestHeader "referer"
+  case (mref,mhdr) of
+    (Nothing, Just u) -> setCookie "_hails_referer" (show u)
+    _                 -> return ()
 
 -- | Redirect to the set refer, if set; or given URL.
 redirectToSavedRefererOrTo :: String -> Action t b IO ()
 redirectToSavedRefererOrTo url = do
-  req <- getHttpReq
-  let mref = lookup "_hails_referer" $ reqCookies req
+  mref <- getCookie "_hails_referer"
   redirectTo $ maybe url S8.unpack mref
   delCookie "_hails_referer"
 
@@ -67,6 +67,11 @@ flashError = flash "error"
 
 flashSuccess :: String -> Action t b IO ()
 flashSuccess = flash "success"
+
+getCookie :: String -> Action t b IO (Maybe S8.ByteString)
+getCookie n = do
+  req <- getHttpReq
+  return $ lookup (S8.pack n) $ reqCookies req
 
 setCookie :: String -> String -> Action t b IO ()
 setCookie n v = modify $ \s ->
