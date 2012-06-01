@@ -16,10 +16,10 @@ import Text.Blaze.Html5.Attributes hiding (label, form, span)
 
 -- | Show main page: edit account, logout
 showView :: String -> Html
-showView user = do
+showView user = 
   div ! class_ "hero-unit" $ do
     h1 $ toHtml $ "Welcome " ++ user ++ "!"
-    p $ "It is a curious reason as to why you landed here."
+    p "It is a curious reason as to why you landed here."
     p $ do a ! href (toValue $ user ++ "/edit")
              ! class_ "btn btn-primary" $ "Edit account"
            " "
